@@ -414,16 +414,6 @@
         </tbody>
       </table>
 
-      <div class="data-tools">
-        <label>
-          티켓 단가
-          <input id="ticketCost" type="number" min="0" step="1" value="0" placeholder="티켓 1장 가격">
-        </label>
-        <button type="button" id="importBtn">가격 데이터 반영</button>
-      </div>
-
-      <textarea id="bulkData" placeholder="추가 가격 데이터 입력 (예: 딸기,600)"></textarea>
-
     </section>
   </main>
 
@@ -703,7 +693,7 @@
       const bingoBonus = bingoBonuses.get(bingoCount) || 0;
       const timeBonus = Number(document.querySelector("#timeBonus").value) || 0;
       const affinityBonus = Number(document.querySelector("#affinityBonus").value) || 0;
-      const ticketCost = Math.max(0, Number(document.querySelector("#ticketCost").value) || 0);
+      const ticketCost = 0;
       const base = states.reduce((sum, state) => sum + state.value, 0);
       const tickets = states.filter(state => state.ticket && state.item).length;
       const filledCount = states.filter(state => state.filled).length;
@@ -838,14 +828,13 @@
     loadBoard();
     calculate();
 
-    ["#timeBonus", "#affinityBonus", "#ticketCost"].forEach(selector => {
+    ["#timeBonus", "#affinityBonus"].forEach(selector => {
       document.querySelector(selector).addEventListener("input", calculate);
       document.querySelector(selector).addEventListener("change", calculate);
     });
     document.querySelector("#saveBtn").addEventListener("click", saveBoard);
     document.querySelector("#clearBtn").addEventListener("click", clearBoard);
     document.querySelector("#sampleBtn").addEventListener("click", sampleBoard);
-    document.querySelector("#importBtn").addEventListener("click", importBulkData);
   </script>
 </body>
 </html>
