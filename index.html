@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>무역 빙고 보상 계산기</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --line: #d9dee7;
+      --text: #202631;
+      --muted: #677181;
+      --accent: #087f8c;
+      --accent-weak: #dff4f6;
+      --good: #18794e;
+      --warn: #a35200;
+      --danger: #b42318;
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 18px 40px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 7px;
+      padding: 9px 12px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: white;
+      color: var(--text);
+      padding: 8px 10px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .top {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(600px, 1fr) 360px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .settings {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .bingo-board {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(112px, 1fr));
+      gap: 8px;
+    }
+
+    .cell {
+      min-height: 178px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px;
+      background: #fbfcfd;
+      display: grid;
+      grid-template-rows: auto auto auto auto 1fr;
+      gap: 7px;
+      position: relative;
+    }
+
+    .cell.filled {
+      border-color: #71c7d1;
+      background: var(--accent-weak);
+    }
+
+    .cell .number {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .inline {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--text);
+      font-size: 13px;
+      user-select: none;
+    }
+
+    .check input {
+      width: 16px;
+      min-height: 16px;
+      accent-color: var(--accent);
+    }
+
+    .cell-result {
+      align-self: end;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .filled .cell-result {
+      color: #155e66;
+      font-weight: 700;
+    }
+
+    .summary {
+      display: grid;
+      gap: 12px;
+    }
+
+    .metric {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 11px;
+    }
+
+    .metric:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .metric .value {
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .metric .sub {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .good {
+      color: var(--good);
+    }
+
+    .warn {
+      color: var(--warn);
+    }
+
+    .danger {
+      color: var(--danger);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 6px;
+      text-align: right;
+      vertical-align: top;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 700;
+      background: #fafbfc;
+    }
+
+    .data-tools {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 10px;
+      font: 13px/1.45 Consolas, "Malgun Gothic", monospace;
+    }
+
+    details {
+      margin-top: 16px;
+    }
+
+    summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    @media (max-width: 980px) {
+      .layout,
+      .settings {
+        grid-template-columns: 1fr;
+      }
+
+      .bingo-board {
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      main {
+        padding: 18px 10px 28px;
+      }
+
+      .top {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .bingo-board {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="top">
+      <div>
+        <h1>무역 빙고 보상 계산기</h1>
+        <p>필요 수하물, 보유 수량, 티켓 사용량을 입력하면 채워진 칸과 빙고 줄 수를 기준으로 예상 보상을 계산합니다.</p>
+      </div>
+      <div class="actions">
+        <button type="button" id="sampleBtn">예시 입력</button>
+        <button type="button" id="clearBtn">초기화</button>
+        <button type="button" class="primary" id="saveBtn">현재 판 저장</button>
+      </div>
+    </div>
+
+    <section class="section">
+      <h2>보너스 설정</h2>
+      <div class="settings">
+        <label>
+          출발 시간 보너스
+          <select id="timeBonus">
+            <option value="0.50">15분 이내 +50%</option>
+            <option value="0.40">20분 이내 +40%</option>
+            <option value="0.30">30분 이내 +30%</option>
+            <option value="0.20">45분 이내 +20%</option>
+            <option value="0.10">60분 이내 +10%</option>
+            <option value="0" selected>없음 0%</option>
+          </select>
+        </label>
+        <label>
+          호감도 보너스
+          <select id="affinityBonus">
+            <option value="0">없음 0%</option>
+            <option value="0.05">최대 호감 3명 이상 +5%</option>
+            <option value="0.07">최대 호감 6명 이상 +7%</option>
+            <option value="0.10">최대 호감 10명 이상 +10%</option>
+            <option value="0.15">최대 호감 14명 이상 +15%</option>
+          </select>
+        </label>
+      </div>
+      <p>계산식: 최종 보상 = 기본 보상 + {(기본 보상 × 시간 보너스) + (기본 보상 × 빙고 보너스) + (기본 보상 × 호감도 보너스)}.</p> 
+      <p>티켓 사용 칸은 해당 칸의 물품 가격을 기본 보상에 포함합니다.</p>
+    </section>
+
+    <div class="layout" style="margin-top:16px">
+      <section class="section">
+        <h2>5x5 수하물 빙고판</h2>
+        <div class="bingo-board" id="board"></div>
+      </section>
+
+      <aside class="section summary">
+        <h2>계산 결과</h2>
+        <div class="metric">
+          <div class="label">채운 칸</div>
+          <div class="value" id="filledCount">0 / 25</div>
+          <div class="sub" id="ticketInfo">티켓 사용 0장</div>
+        </div>
+        <div class="metric">
+          <div class="label">완성 빙고</div>
+          <div class="value good" id="bingoCount">0줄</div>
+          <div class="sub" id="bingoBonusText">빙고 보너스 +0%</div>
+        </div>
+        <div class="metric">
+          <div class="label">기본 보상</div>
+          <div class="value" id="baseReward">0원</div>
+          <div class="sub" id="baseDetail">채운 칸 가격 합계</div>
+        </div>
+        <div class="metric">
+          <div class="label">최종 예상 보상</div>
+          <div class="value good" id="finalReward">0원</div>
+          <div class="sub" id="bonusDetail">보너스 합계 +0%</div>
+        </div>
+        <div class="metric">
+          <div class="label">순이익 참고</div>
+          <div class="value" id="profit">0원</div>
+          <div class="sub">티켓 단가를 입력하면 티켓 비용을 제외합니다.</div>
+        </div>
+      </aside>
+    </div>
+
+    <section class="section" style="margin-top:16px">
+      <h2>채운 물품 목록</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>칸</th>
+            <th>물품</th>
+            <th>필요</th>
+            <th>보유</th>
+            <th>티켓</th>
+            <th>가격</th>
+          </tr>
+        </thead>
+        <tbody id="filledRows">
+          <tr><td colspan="6">아직 채운 칸이 없습니다.</td></tr>
+        </tbody>
+      </table>
+
+    </section>
+  </main>
+
+  <template id="cellTemplate">
+    <div class="cell">
+      <div class="number"></div>
+      <label>
+        필요 물품
+        <input class="item" list="items" placeholder="예: 딸기">
+      </label>
+      <div class="inline">
+        <label>
+          필요
+          <input class="need" type="number" min="1" step="1" value="1">
+        </label>
+        <label class="check has-item">
+          <input class="have" type="checkbox">
+          물품 있음
+        </label>
+      </div>
+      <label class="check">
+        <input class="ticket" type="checkbox">
+        수하물 티켓 사용
+      </label>
+      <div class="cell-result"></div>
+    </div>
+  </template>
+
+  <datalist id="items"></datalist>
+
+  <script>
+    const bingoBonuses = new Map([
+      [1, 0.10], [2, 0.13], [3, 0.16], [4, 0.19], [5, 0.22], [6, 0.25],
+      [7, 0.28], [8, 0.31], [9, 0.34], [10, 0.37], [11, 0.40], [12, 0.50]
+    ]);
+
+    const defaultPrices = [
+      ["자수정 주괴", 1],
+      ["황수정 주괴", 1],
+      ["텅스텐 주괴", 2],
+      ["공작석 주괴", 4],
+      ["제이드 주괴", 5],
+      ["스피넬 주괴", 3],
+      ["사파이어주괴", 10],
+      ["사파이어 주괴", 10],
+      ["이리듐 주괴", 15],
+      ["아다만티움주괴", 20],
+      ["아다만티움 주괴", 20],
+      ["아쿠아마린 보석", 90],
+      ["페리도트 보석", 90],
+      ["앰버 보석", 100],
+      ["시트린 보석", 100],
+      ["산호석 보석", 100],
+      ["라리마 보석", 100],
+      ["가넷 보석", 100],
+      ["루비 보석", 100],
+      ["돌뭉치", 10],
+      ["비빔밥", 16779],
+      ["채소덮밥", 12598, 18897, 37794],
+      ["크림리조또", 13956, 20934, 41868],
+      ["토마토파스타", 10410, 15615, 31230],
+      ["크림파스타", 7080, 10620, 21240],
+      ["된장찌개", 15100, 22650, 45300],
+      ["김치찌개", 19005, 28508, 57016],
+      ["고추장찌개", 12120, 18180, 36360],
+      ["크림수프", 5628, 8442, 16884],
+      ["모듬튀김", 12106, 18159, 36318],
+      ["고구마스틱", 5156, 7734, 15468],
+      ["야채튀김", 2628, 3942, 7884],
+      ["딸기화채", 10800, 16200, 32400],
+      ["수박화채", 12728, 19092, 38184],
+      ["고기볶음", 15180, 22770, 45540],
+      ["배추전", 11490, 17235, 34470],
+      ["파인애플피자", 12590, 18885, 37770],
+      ["김치", 11850, 13035, 26070],
+      ["밀가루", 384, 384, 768],
+      ["쌀가루", 2400, 2400, 4800],
+      ["전분가루", 1200, 1200, 2400],
+      ["시럽", 128, 128, 256],
+      ["코코아파우더", 128, 128, 256],
+      ["토마토케첩", 3856, 4242, 8484],
+      ["육수", 3064, 3370, 6740],
+      ["간장", 3700, 4070, 8140],
+      ["된장", 2600, 2860, 5720],
+      ["고추장", 5656, 6222, 12444],
+      ["마늘기름", 4900, 5390, 10780],
+      ["고추기름", 4900, 5390, 10780],
+      ["양념장", 7500, 8250, 16500],
+      ["크림", 1956, 1956, 3912],
+      ["피클", 6384, 7022, 14044],
+      ["초코쉐이크", 1124, 1349, 2698],
+      ["초코뚱카롱", 4268, 5122, 10244],
+      ["고구마 롤케이크", 5412, 6494, 12988],
+      ["우유 롤케이크", 4780, 5736, 11472],
+      ["망고 롤케이크", 7656, 9187, 18374],
+      ["메론빵", 4624, 5549, 11098],
+      ["샌드위치", 3168, 3802, 7604],
+      ["블루베리 케이크", 5968, 7162, 14324],
+      ["딸기 마카롱", 5812, 6974, 13948],
+      ["오렌지 캔디", 6768, 8122, 16244],
+      ["어른 캔디", 6768, 8122, 16244],
+      ["레몬 타르트", 6884, 8261, 16522],
+      ["초코 크림 도넛", 1892, 2270, 4540],
+      ["옥수수 아이스크림", 5368, 6442, 12884],
+      ["쌀 크루아상", 5412, 6494, 12988],
+      ["수양나무판자", 848, 1272, 2544],
+      ["고목나무판자", 928, 1392, 2784],
+      ["열대나무판자", 928, 1392, 2784],
+      ["화산나무판자", 928, 1392, 2784],
+      ["합판", 2664, 3996, 7992],
+      ["고급합판", 2784, 4176, 8352],
+      ["생명의광휘보석", 864, 1037, 2074],
+      ["태양의축복보석", 528, 634, 1268],
+      ["바다의여명보석", 944, 1133, 2266],
+      ["열정의불꽃보석", 1016, 1219, 2438],
+      ["생명의목걸이", 1157, 1736, 3472],
+      ["태양의목걸이", 754, 1131, 2262],
+      ["바다의목걸이", 1253, 1880, 3760],
+      ["열정의목걸이", 1339, 2009, 4018],
+      ["생명의반지", 1117, 1676, 3352],
+      ["태양의반지", 714, 1071, 2142],
+      ["바다의반지", 1213, 1820, 3640],
+      ["열정의반지", 1299, 1949, 3898],
+      ["바나나와인", 28800, 37440, 74880],
+      ["블루베리와인", 19200, 24960, 49920],
+      ["포도와인", 28800, 37440, 74880],
+      ["레몬와인", 28800, 37440, 74880],
+      ["망고와인", 38400, 49920, 99840],
+      ["멜론와인", 19200, 24960, 49920],
+      ["오렌지와인", 48000, 62400, 124800],
+      ["복숭아와인", 48000, 62400, 124800],
+      ["파인애플와인", 28800, 37440, 74880],
+      ["딸기와인", 19200, 24960, 49920],
+      ["바나나잼", 28800, 33120, 66240],
+      ["블루베리잼", 19200, 22080, 44160],
+      ["포도잼", 28800, 33120, 66240],
+      ["레몬잼", 28800, 33120, 66240],
+      ["망고잼", 38400, 44160, 88320],
+      ["멜론잼", 19200, 22080, 44160],
+      ["오렌지잼", 48000, 55200, 110400],
+      ["복숭아잼", 48000, 55200, 110400],
+      ["파인애플잼", 28800, 33120, 66240],
+      ["딸기잼", 19200, 22080, 44160],
+      ["양배추", 300, 300, 300],
+      ["파슬리", 300, 300, 300],
+      ["토마토", 300, 300, 300],
+      ["옥수수", 300, 300, 300],
+      ["콩", 300, 300, 300],
+      ["딸기", 600, 600, 600],
+      ["양파", 600, 600, 600],
+      ["고추", 600, 600, 600],
+      ["블루베리", 600, 600, 600],
+      ["멜론", 600, 600, 600],
+      ["쌀", 600, 600, 600],
+      ["무", 600, 600, 600],
+      ["파", 600, 600, 600],
+      ["브로콜리", 900, 900, 900],
+      ["아스파라거스", 900, 900, 900],
+      ["바나나", 900, 900, 900],
+      ["가지", 900, 900, 900],
+      ["파인애플", 900, 900, 900],
+      ["파프리카", 900, 900, 900],
+      ["망고", 900, 900, 900],
+      ["포도", 900, 900, 900],
+      ["배추", 900, 900, 900],
+      ["고구마", 1200, 1200, 1200],
+      ["순무", 1200, 1200, 1200],
+      ["레몬", 1200, 1200, 1200],
+      ["마늘", 1200, 1200, 1200],
+      ["아티초크", 1500, 1500, 1500],
+      ["복숭아", 1500, 1500, 1500],
+      ["산삼", 1500, 1500, 1500],
+      ["오렌지", 1500, 1500, 1500],
+      ["수국", 5],
+      ["창포", 5],
+      ["하바스커스", 5],
+      ["사막장미", 5],
+      ["라벤더", 5],
+      ["능소화", 5],
+      ["불꽃 백합", 5],
+      ["용설란 꽃", 5]
+    ];
+
+    const priceMap = new Map();
+    const board = document.querySelector("#board");
+    const template = document.querySelector("#cellTemplate");
+    const datalist = document.querySelector("#items");
+    const storageKey = "trade-bingo-board-v1";
+
+    function money(value) {
+      return Math.round(value).toLocaleString("ko-KR") + "원";
+    }
+
+    function percent(value) {
+      return "+" + Math.round(value * 100) + "%";
+    }
+
+    function normalizeName(name) {
+      return String(name || "").trim().replace(/\s+/g, " ");
+    }
+
+    function addPrice(name, price, legacyProcessed) {
+      const key = normalizeName(name);
+      if (!key) return;
+      const salePrice = arguments.length >= 3 ? legacyProcessed : price;
+      priceMap.set(key, Number(salePrice) || 0);
+    }
+
+    function getPrice(name) {
+      const key = normalizeName(name);
+      const direct = priceMap.get(key);
+      if (direct) return direct;
+      const noSpace = key.replace(/\s/g, "");
+      for (const [itemName, price] of priceMap.entries()) {
+        if (itemName.replace(/\s/g, "") === noSpace) return price;
+      }
+      return null;
+    }
+
+    function currentCells() {
+      return Array.from(board.querySelectorAll(".cell"));
+    }
+
+    function buildDatalist() {
+      datalist.innerHTML = "";
+      [...priceMap.keys()].sort((a, b) => a.localeCompare(b, "ko-KR")).forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        datalist.append(option);
+      });
+    }
+
+    function buildBoard() {
+      board.innerHTML = "";
+      for (let i = 0; i < 25; i += 1) {
+        const node = template.content.firstElementChild.cloneNode(true);
+        node.dataset.index = String(i);
+        node.querySelector(".number").textContent = `${i + 1}번 칸`;
+        node.addEventListener("input", calculate);
+        node.addEventListener("change", calculate);
+        board.append(node);
+      }
+    }
+
+    function cellState(cell) {
+      const item = normalizeName(cell.querySelector(".item").value);
+      const need = Math.max(1, Number(cell.querySelector(".need").value) || 1);
+      const have = cell.querySelector(".have").checked;
+      const ticket = cell.querySelector(".ticket").checked;
+      const priceData = getPrice(item);
+      const unitPrice = priceData || 0;
+      const filled = Boolean(item) && (ticket || have);
+      const value = filled ? unitPrice * need : 0;
+      return { item, need, have, ticket, priceData, unitPrice, filled, value };
+    }
+
+    function countBingos(filled) {
+      let total = 0;
+      const lines = [];
+      for (let r = 0; r < 5; r += 1) {
+        lines.push([0, 1, 2, 3, 4].map(c => r * 5 + c));
+      }
+      for (let c = 0; c < 5; c += 1) {
+        lines.push([0, 1, 2, 3, 4].map(r => r * 5 + c));
+      }
+      lines.push([0, 6, 12, 18, 24], [4, 8, 12, 16, 20]);
+      for (const line of lines) {
+        if (line.every(index => filled[index])) total += 1;
+      }
+      return total;
+    }
+
+    function calculate() {
+      const states = currentCells().map(cellState);
+      const filledFlags = states.map(state => state.filled);
+      const bingoCount = countBingos(filledFlags);
+      const bingoBonus = bingoBonuses.get(bingoCount) || 0;
+      const timeBonus = Number(document.querySelector("#timeBonus").value) || 0;
+      const affinityBonus = Number(document.querySelector("#affinityBonus").value) || 0;
+      const ticketCost = Math.max(0, Number(document.querySelector("#ticketCost").value) || 0);
+      const base = states.reduce((sum, state) => sum + state.value, 0);
+      const tickets = states.filter(state => state.ticket && state.item).length;
+      const filledCount = states.filter(state => state.filled).length;
+      const bonusSum = timeBonus + bingoBonus + affinityBonus;
+      const final = base * (1 + bonusSum);
+      const profit = final - (tickets * ticketCost);
+
+      states.forEach((state, index) => {
+        const cell = currentCells()[index];
+        cell.classList.toggle("filled", state.filled);
+        const result = cell.querySelector(".cell-result");
+        if (!state.item) {
+          result.textContent = "물품을 입력하세요.";
+        } else if (!state.priceData) {
+          result.innerHTML = `<span class="danger">가격 데이터 없음</span>`;
+        } else if (state.filled) {
+          const reason = state.ticket ? "티켓으로 채움" : "물품 있음";
+          result.textContent = `${reason} · ${money(state.value)}`;
+        } else {
+          result.innerHTML = `<span class="warn">미보유</span> · 단가 ${money(state.unitPrice)}`;
+        }
+      });
+
+      document.querySelector("#filledCount").textContent = `${filledCount} / 25`;
+      document.querySelector("#ticketInfo").textContent = `티켓 사용 ${tickets}장`;
+      document.querySelector("#bingoCount").textContent = `${bingoCount}줄`;
+      document.querySelector("#bingoBonusText").textContent = `빙고 보너스 ${percent(bingoBonus)}`;
+      document.querySelector("#baseReward").textContent = money(base);
+      document.querySelector("#baseDetail").textContent = "채운 칸의 가공 후 판매가 합계";
+      document.querySelector("#finalReward").textContent = money(final);
+      document.querySelector("#bonusDetail").textContent = `시간 ${percent(timeBonus)} + 빙고 ${percent(bingoBonus)} + 호감도 ${percent(affinityBonus)} = 보너스 합계 ${percent(bonusSum)}`;
+      document.querySelector("#profit").textContent = money(profit);
+
+      const rows = states
+        .map((state, index) => ({ ...state, index }))
+        .filter(state => state.filled);
+      const tbody = document.querySelector("#filledRows");
+      tbody.innerHTML = "";
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="6">아직 채운 칸이 없습니다.</td></tr>`;
+      } else {
+        rows.forEach(state => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${state.index + 1}</td>
+            <td>${state.item}</td>
+            <td>${state.need}</td>
+            <td>${state.have ? "있음" : "없음"}</td>
+            <td>${state.ticket ? "사용" : "-"}</td>
+            <td>${money(state.value)}</td>
+          `;
+          tbody.append(row);
+        });
+      }
+    }
+
+    function saveBoard() {
+      const data = currentCells().map(cell => ({
+        item: cell.querySelector(".item").value,
+        need: cell.querySelector(".need").value,
+        have: cell.querySelector(".have").checked,
+        ticket: cell.querySelector(".ticket").checked
+      }));
+      localStorage.setItem(storageKey, JSON.stringify(data));
+      alert("현재 빙고판을 저장했습니다.");
+    }
+
+    function loadBoard() {
+      const saved = localStorage.getItem(storageKey);
+      if (!saved) return false;
+      try {
+        const data = JSON.parse(saved);
+        currentCells().forEach((cell, index) => {
+          const state = data[index] || {};
+          cell.querySelector(".item").value = state.item || "";
+          cell.querySelector(".need").value = state.need || 1;
+          cell.querySelector(".have").checked = state.have === true || state.have === "true" || Number(state.have) > 0;
+          cell.querySelector(".ticket").checked = Boolean(state.ticket);
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function clearBoard() {
+      currentCells().forEach(cell => {
+        cell.querySelector(".item").value = "";
+        cell.querySelector(".need").value = 1;
+        cell.querySelector(".have").checked = false;
+        cell.querySelector(".ticket").checked = false;
+      });
+      calculate();
+    }
+
+    function sampleBoard() {
+      const sample = [
+        ["딸기", 2, 2], ["양파", 1, 1], ["토마토", 5, 5], ["옥수수", 3, 3], ["콩", 4, 4],
+        ["비빔밥", 1, 1], ["채소덮밥", 1, 1], ["크림파스타", 1, 0], ["김치찌개", 1, 1], ["고추장", 2, 2],
+        ["바나나와인", 1, 1], ["망고잼", 1, 1], ["오렌지", 4, 4], ["고구마", 2, 0], ["배추", 3, 3],
+        ["합판", 2, 2], ["생명의반지", 1, 1], ["사파이어 주괴", 1, 0], ["멜론", 5, 5], ["레몬", 3, 3],
+        ["파인애플피자", 1, 1], ["된장찌개", 1, 1], ["딸기와인", 1, 1], ["복숭아잼", 1, 0], ["마늘", 2, 2]
+      ];
+      currentCells().forEach((cell, index) => {
+        const [item, need, have] = sample[index];
+        cell.querySelector(".item").value = item;
+        cell.querySelector(".need").value = need;
+        cell.querySelector(".have").checked = have > 0;
+        cell.querySelector(".ticket").checked = [7, 13, 17, 23].includes(index);
+      });
+      calculate();
+    }
+
+    function importBulkData() {
+      const text = document.querySelector("#bulkData").value.trim();
+      if (!text) return;
+      text.split(/\n+/).forEach(line => {
+        const parts = line.split(",").map(part => part.trim());
+        if (parts.length >= 2) {
+          const [name, price] = parts;
+          addPrice(name, price.replace(/[^\d.]/g, ""));
+        }
+      });
+      buildDatalist();
+      calculate();
+      alert("가격 데이터를 반영했습니다.");
+    }
+
+    defaultPrices.forEach(row => addPrice(...row));
+    buildDatalist();
+    buildBoard();
+    loadBoard();
+    calculate();
+
+    ["#timeBonus", "#affinityBonus", "#ticketCost"].forEach(selector => {
+      document.querySelector(selector).addEventListener("input", calculate);
+      document.querySelector(selector).addEventListener("change", calculate);
+    });
+    document.querySelector("#saveBtn").addEventListener("click", saveBoard);
+    document.querySelector("#clearBtn").addEventListener("click", clearBoard);
+    document.querySelector("#sampleBtn").addEventListener("click", sampleBoard);
+    document.querySelector("#importBtn").addEventListener("click", importBulkData);
+  </script>
+</body>
+</html>
