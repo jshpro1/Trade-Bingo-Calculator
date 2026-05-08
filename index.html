@@ -355,6 +355,10 @@
             <option value="0.15">최대 호감 14명 이상 +15%</option>
           </select>
         </label>
+        <label>
+          티켓 전체값
+          <input id="ticketTotalCost" type="number" min="0" step="1" value="0">
+        </label>
       </div>
       <p>계산식: 최종 보상 = 기본 보상 + {(기본 보상 × 시간 보너스) + (기본 보상 × 빙고 보너스) + (기본 보상 × 호감도 보너스)}.</p> 
       <p>티켓 사용 칸은 해당 칸의 물품 가격을 기본 보상에 포함합니다.</p>
@@ -391,7 +395,7 @@
         <div class="metric">
           <div class="label">순이익 참고</div>
           <div class="value" id="profit">0원</div>
-          <div class="sub">티켓 단가를 입력하면 티켓 비용을 제외합니다.</div>
+          <div class="sub" id="profitDetail">최종 예상 보상에서 티켓 전체값을 제외합니다.</div>
         </div>
       </aside>
     </div>
@@ -413,7 +417,6 @@
           <tr><td colspan="6">아직 채운 칸이 없습니다.</td></tr>
         </tbody>
       </table>
-
     </section>
   </main>
 
@@ -519,6 +522,14 @@
       ["초코 크림 도넛", 1892, 2270, 4540],
       ["옥수수 아이스크림", 5368, 6442, 12884],
       ["쌀 크루아상", 5412, 6494, 12988],
+      ["버드나무 판자", 90],
+      ["단풍나무 판자", 90],
+      ["야자나무 판자", 100],
+      ["바오밥나무 판자", 100],
+      ["올리브나무 판자", 100],
+      ["사이프러스나무 판자", 100],
+      ["유칼립투스 판자", 100],
+      ["용혈수 판자", 100],
       ["수양나무판자", 848, 1272, 2544],
       ["고목나무판자", 928, 1392, 2784],
       ["열대나무판자", 928, 1392, 2784],
@@ -693,13 +704,13 @@
       const bingoBonus = bingoBonuses.get(bingoCount) || 0;
       const timeBonus = Number(document.querySelector("#timeBonus").value) || 0;
       const affinityBonus = Number(document.querySelector("#affinityBonus").value) || 0;
-      const ticketCost = 0;
+      const ticketTotalCost = Math.max(0, Number(document.querySelector("#ticketTotalCost").value) || 0);
       const base = states.reduce((sum, state) => sum + state.value, 0);
       const tickets = states.filter(state => state.ticket && state.item).length;
       const filledCount = states.filter(state => state.filled).length;
       const bonusSum = timeBonus + bingoBonus + affinityBonus;
       const final = base * (1 + bonusSum);
-      const profit = final - (tickets * ticketCost);
+      const profit = final - ticketTotalCost;
 
       states.forEach((state, index) => {
         const cell = currentCells()[index];
@@ -726,6 +737,7 @@
       document.querySelector("#finalReward").textContent = money(final);
       document.querySelector("#bonusDetail").textContent = `시간 ${percent(timeBonus)} + 빙고 ${percent(bingoBonus)} + 호감도 ${percent(affinityBonus)} = 보너스 합계 ${percent(bonusSum)}`;
       document.querySelector("#profit").textContent = money(profit);
+      document.querySelector("#profitDetail").textContent = `최종 예상 보상 ${money(final)} - 티켓 전체값 ${money(ticketTotalCost)}`;
 
       const rows = states
         .map((state, index) => ({ ...state, index }))
@@ -828,13 +840,14 @@
     loadBoard();
     calculate();
 
-    ["#timeBonus", "#affinityBonus"].forEach(selector => {
+    ["#timeBonus", "#affinityBonus", "#ticketTotalCost"].forEach(selector => {
       document.querySelector(selector).addEventListener("input", calculate);
       document.querySelector(selector).addEventListener("change", calculate);
     });
     document.querySelector("#saveBtn").addEventListener("click", saveBoard);
     document.querySelector("#clearBtn").addEventListener("click", clearBoard);
     document.querySelector("#sampleBtn").addEventListener("click", sampleBoard);
+    document.querySelector("#importBtn").addEventListener("click", importBulkData);
   </script>
 </body>
 </html>
